@@ -1,0 +1,70 @@
+import speech_recognition as sr
+import pyttsx3
+import datetime
+import requests
+
+# Initialize the recognizer and the text-to-speech engine
+recognizer = sr.Recognizer()
+engine = pyttsx3.init()
+
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+def listen():
+    with sr.Microphone() as source:
+        print("Listening...")
+        audio = recognizer.listen(source)
+        try:
+            command = recognizer.recognize_google(audio)
+            print(f"You said: {command}")
+            return command.lower()
+        except sr.UnknownValueError:
+            speak("Sorry, I did not understand that.")
+            return None
+        except sr.RequestError:
+            speak("Sorry, I'm having trouble connecting to the service.")
+            return None
+
+def get_time():
+    now = datetime.datetime.now()
+    return now.strftime("%H:%M")
+
+def get_date():
+    now = datetime.datetime.now()
+    return now.strftime("%Y-%m-%d")
+
+def weather_report():
+    # Example API usage; replace with a real API endpoint and key
+    api_key = "your_api_key_here"
+    location = "your_location_here"
+    url = f"http://api.weatherapi.com/v1/current.json?key={api_key}&q={location}"
+    response = requests.get(url).json()
+    temp_c = response['current']['temp_c']
+    condition = response['current']['condition']['text']
+    return f"The current temperature is {temp_c}°C and the weather is {condition}."
+
+def execute_command(command):
+    if 'time' in command:
+        speak(f"The time is {get_time()}.")
+    elif 'date' in command:
+        speak(f"Today's date is {get_date()}.")
+    elif 'weather' in command:
+        speak(weather_report())
+    elif 'hello' in command:
+        speak("Hello! How can I assist you today?")
+    else:
+        speak("Sorry, I can't help with that.")
+
+def main():
+    speak("Hello, I am your voice assistant. How can I help you?")
+    while True:
+        command = listen()
+        if command:
+            execute_command(command)
+        if 'exit' in command or 'quit' in command:
+            speak("Goodbye!")
+            break
+
+if __name__ == "__main__":
+    main()
